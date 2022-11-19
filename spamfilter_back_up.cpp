@@ -26,6 +26,7 @@ class trained{
         data_feature get_data(int i);
         probability get_prob(int i);
         probability get_prob(string word);
+        double get_only_prob(string word);
         int get_amount();
         int get_word_amount();
 };
@@ -92,6 +93,15 @@ probability trained::get_prob(string word){
     }
     return prob;
 }
+double trained::get_only_prob(string word){
+    double prob;
+    for(int i=0;i<amount;i++){
+        if((data[i].type)==word){
+            prob = (double)data[i].count/(double)amount;
+        }
+    }
+    return prob;
+}
 
 string eliminate(string line){ //eliminiate special characters, organize sentences
     string eli_line;
@@ -143,6 +153,7 @@ class trained_data{
         int get_amount();
         probability get_prob(int i);
         probability get_prob(string word);
+        double get_only_prob(string word);
 };
 
 trained_data::trained_data(string file){
@@ -195,6 +206,9 @@ probability trained_data::get_prob(int i){
 probability trained_data::get_prob(string word){
     return data.get_prob(word);
 }
+double trained_data::get_only_prob(string word){
+    return data.get_only_prob(word);
+}
 
 class test{
     private:
@@ -205,6 +219,7 @@ class test{
         int get_amount(int i);
         probability get_prob(int i);
         probability get_prob(int i, string word);
+        data_feature get_word(int col, int row);
 };
 
 test::test(string file, int number){
@@ -259,21 +274,30 @@ probability test::get_prob(int i, string word){
     return data[i].get_prob(word);
 }
 
+data_feature test::get_word(int cols, int rows){
+    data_feature temp;
+    temp = data[cols].get_data(rows);
+    return temp;
+}
+
 int main(){
     // probability cond_train_ham[ham.get_amount()];
     trained_data train_ham("csv/train/dataset_ham_train100.csv");
     
-    cout << train_ham.get_prob("subject").prob << endl;
+   
 
     // // probability cond_train_spam[spam.get_amount()];
-    // trained_data train_spam("csv/train/dataset_spam_train100.csv");
+    trained_data train_spam("csv/train/dataset_spam_train100.csv");
     
     // //enter the number of test cases and file name including paths 
-    // test test_ham("csv/test/dataset_ham_test20.csv",20);
+    test test_ham("csv/test/dataset_ham_test20.csv",20);
 
     // //enter the number of test cases and file name including paths 
-    // test test_spam("csv/test/dataset_spam_test20.csv",20);
+    test test_spam("csv/test/dataset_spam_test20.csv",20);
 
+
+     cout << train_ham.get_prob(test_ham.get_word(0,0).type).prob << endl;
+     cout << train_ham.get_only_prob(test_ham.get_word(0,0).type) << endl;
     return 0;
 }
 
