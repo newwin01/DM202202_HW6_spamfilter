@@ -94,7 +94,7 @@ probability trained::get_prob(string word){
     return prob;
 }
 double trained::get_only_prob(string word){
-    double prob;
+    double prob=0.5;
     for(int i=0;i<amount;i++){
         if((data[i].type)==word){
             prob = (double)data[i].count/(double)amount;
@@ -283,7 +283,7 @@ data_feature test::get_word(int cols, int rows){
 int main(){
     // probability cond_train_ham[ham.get_amount()];
     trained_data train_ham("csv/train/dataset_ham_train100.csv");
-    
+
     // // probability cond_train_spam[spam.get_amount()];
     trained_data train_spam("csv/train/dataset_spam_train100.csv");
     
@@ -293,9 +293,52 @@ int main(){
     // //enter the number of test cases and file name including paths 
     test test_spam("csv/test/dataset_spam_test20.csv",20);
 
+    double p_ham = 0.5;
+    double p_spam = 0.5;
 
-     cout << train_ham.get_prob(test_ham.get_word(0,0).type).prob << endl;
-     cout << train_ham.get_only_prob(test_ham.get_word(0,0).type) << endl;
+    double p_cond_spam = 0.0;
+    double p_cond_ham = 0.0;
+    double result=0.0;
+ 
+    for(int i=0;i<test_ham.get_amount(0);i++){
+        if(i==0){
+            p_cond_ham = (train_ham.get_only_prob(test_ham.get_word(0,i).type));
+            p_cond_spam = (train_spam.get_only_prob(test_ham.get_word(0,i).type));
+        } else{
+            p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_ham.get_word(0,i).type));
+            p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_ham.get_word(0,i).type));
+        }
+    //     cout << test_ham.get_word(0,i).count << " " << test_ham.get_word(0,i).type << endl;
+    //     cout << (train_ham.get_only_prob(test_ham.get_word(0,i).type)) << endl;
+    //    cout << (train_ham.get_only_prob(test_ham.get_word(0,i).type)) << endl;
+    }
+
+    // cout << p_cond_ham << p_cond_spam;
+    result = p_cond_ham/(p_cond_ham+p_cond_spam);
+    // cout << result;
+
+
+    // p_cond_spam = 0.0;
+    // p_cond_ham = 0.0;
+    // result = 0.0;
+
+    // for(int i=0;i<test_spam.get_amount(0);i++){
+    //     if(i==0){
+    //         p_cond_ham = (train_ham.get_only_prob(test_spam.get_word(0,i).type));
+    //         p_cond_spam = (train_spam.get_only_prob(test_spam.get_word(0,i).type));
+    //     } else{
+    //         p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_spam.get_word(0,i).type));
+    //         p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_spam.get_word(0,i).type));
+    //     }
+    //     // cout << test_ham.get_word(0,i).count << " " << test_ham.get_word(0,i).type << endl;
+    //     // cout << (train_ham.get_only_prob(test_ham.get_word(0,i).type)) << endl;
+    // //    cout << (train_ham.get_only_prob(test_ham.get_word(0,i).type)) << endl;
+    // }
+    // cout << p_cond_ham << p_cond_spam;
+    // result = p_cond_spam/(p_cond_ham+p_cond_spam);
+    cout << result;
+
+    
     return 0;
 }
 
