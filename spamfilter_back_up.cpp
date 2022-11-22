@@ -9,11 +9,11 @@ typedef struct {
 } data_feature;
 
 typedef struct{
-    double prob;
-    string type;
-} probability;
+    double ham_prob;
+    double spam_prob;
+} prob;
 
-//trained data
+//data structure for trained data
 class trained{
     private:
         int amount;
@@ -24,11 +24,11 @@ class trained{
         void add_data(string line);
         void print();
         data_feature get_data(int i);
-        probability get_prob(int i);
-        probability get_prob(string word);
         double get_only_prob(string word);
         int get_amount();
         int get_word_amount();
+        void quick_sort();
+        void cut(int num);
 };
 trained::trained(){
     amount = 0;
@@ -36,20 +36,21 @@ trained::trained(){
 }
 void trained::add_data(string line){
     word_amount++;
-    if(amount==0){//0개면
+    //if empty
+    if(amount==0){
         amount++;
         data = new data_feature[amount];
         data[0].count = 1;
         data[0].type.assign(line);
         return;
-    }//맞는게 있다면
+    }//if there is a word
     for(int i=0;i<amount;i++){
         if(data[i].type.compare(line)==0){
             data[i].count++;
             return;
         }
     }
-    //맞는게 없으면
+    //make more spaces
     amount++;
     data_feature *new_data = new data_feature[amount];
     for(int i=0;i<amount-1;i++){
@@ -63,44 +64,85 @@ void trained::add_data(string line){
     data = new_data;
     return;
 }
-void trained::print(){
+
+void trained::print(){//print out whole data
     for(int i=0;i<amount;i++){
         cout << data[i].count << " " << data[i].type << "/\n";
     }
 }
+
 data_feature trained::get_data(int i){
     return data[i];
 }
 int trained::get_amount(){
     return amount;
+
 }
 int trained::get_word_amount(){
     return word_amount;
 }
-probability trained::get_prob(int i){
-    probability prob;
-    prob.prob = (double)data[i].count/(double)amount;
-    prob.type = data[i].type;
-    return prob;
-}
-probability trained::get_prob(string word){
-    probability prob;
-    for(int i=0;i<amount;i++){
-        if((data[i].type)==word){
-            prob.prob = (double)data[i].count/(double)amount;
-            prob.type = data[i].type;
-        }
-    }
-    return prob;
-}
+
 double trained::get_only_prob(string word){
-    double prob;
+    double prob=1.0;
     for(int i=0;i<amount;i++){
         if((data[i].type)==word){
             prob = (double)data[i].count/(double)amount;
         }
     }
     return prob;
+}
+
+void swap(data_feature* a, data_feature* b)
+{
+    data_feature temp;
+    temp = *a;
+    a->count = b->count;
+    a->type = b->type;
+    b->count = temp.count;
+    b->type = temp.type;
+}
+
+int partition(data_feature arr[], int low, int high)
+{
+    int pivot = arr[high].count; 
+    int i = (low- 1); 
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j].count > pivot) {
+            i++; 
+            swap(&arr[i], &arr[j]);
+        }
+    }
+    swap(&arr[i + 1], &arr[high]);
+    return (i + 1);
+}
+
+void quickSort(data_feature arr[], int low, int high)
+{
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+void trained::quick_sort(){
+    int n = amount-1;
+    quickSort(data, 0, n - 1);
+}
+
+void trained::cut(int amount){
+    data_feature *new_data = new data_feature[amount];
+    this->amount = amount;
+    word_amount = 0;
+    for(int i=0;i<amount;i++){
+        new_data[i].count = data[i].count;
+        new_data[i].type.assign(data[i].type);
+        word_amount = word_amount + data[i].count;
+    }
+    delete []data;
+    data = NULL;
+    data = new_data;
+    return;
 }
 
 string eliminate(string line){ //eliminiate special characters, organize sentences
@@ -151,9 +193,11 @@ class trained_data{
     public:
         trained_data(string line);
         int get_amount();
-        probability get_prob(int i);
-        probability get_prob(string word);
         double get_only_prob(string word);
+        void sort();
+        void print();
+        data_feature get_data(int i);
+        void cut(int num);
 };
 
 trained_data::trained_data(string file){
@@ -200,31 +244,64 @@ int trained_data::get_amount(){
     return data.get_amount();
 }
 
-probability trained_data::get_prob(int i){
-    return data.get_prob(i);
-}
-probability trained_data::get_prob(string word){
-    return data.get_prob(word);
-}
 double trained_data::get_only_prob(string word){
     return data.get_only_prob(word);
 }
 
+void trained_data::sort(){
+    data.quick_sort();
+}
+
+void trained_data::print(){
+    data.print();
+}
+
+data_feature trained_data::get_data(int i){
+    return data.get_data(i);
+}
+
+void trained_data::cut(int num){
+    data.cut(num);
+}
+
 class test{
     private:
-        int set_data;
-        trained *data;
+        double *probabilty;
     public:
-        test(string line, int number);
-        int get_amount(int i);
-        probability get_prob(int i);
-        probability get_prob(int i, string word);
-        data_feature get_word(int col, int row);
+        test(int numumber,string file, trained_data ham, trained_data spam);
+        double get_probability(int num);
 };
 
-test::test(string file, int number){
-    number = set_data;
-    data = new trained[set_data];
+
+prob parse_string(string line,trained_data ham, trained_data spam){
+    prob probabilty;
+    probabilty.ham_prob = 1;
+    probabilty.spam_prob = 1;
+    string parse;
+    int count=0, decision=0;
+    int prev_count = 0;
+    while(decision!=-1){
+        prev_count = count;
+        count = line.find(" ",count);
+        if(count==0){
+            count++;
+            continue;
+        }
+        parse = line.substr(prev_count, count-prev_count);
+        if(parse.empty()){
+            decision = line.find(" ",count++);
+            continue;
+        } 
+        decision = line.find(" ",count++);
+        probabilty.ham_prob = probabilty.ham_prob*ham.get_only_prob(parse);
+        probabilty.spam_prob = probabilty.spam_prob*spam.get_only_prob(parse);
+    }
+    return probabilty;
+}
+
+test::test(int number,string file, trained_data ham, trained_data spam){
+    prob temp;
+    probabilty = new double[20];
     string line;
     string data_line;
     int parse;
@@ -241,11 +318,11 @@ test::test(string file, int number){
             parse = line.rfind(",");
             data_line = line.substr(parse+2);
             data_line = eliminate(data_line);
-            data[count] = parse_string(data_line,data[count]);
+            temp = parse_string(data_line,ham,spam);
             while(getline(openFile,line)){
                 if((line.find("\"")==-1)){
                     data_line = eliminate(line);
-                    data[count] = parse_string(data_line,data[count]);
+                    probabilty[count] = parse_string(data_line,data[count]);
                 }
                 else{
                     parse = line.find("\"");
@@ -264,90 +341,94 @@ test::test(string file, int number){
         count++;
     }
     openFile.close();
+
 }
 
-int test::get_amount(int i){
-    return data[i].get_amount();
-}
 
-probability test::get_prob(int i, string word){
-    return data[i].get_prob(word);
-}
-
-data_feature test::get_word(int cols, int rows){
-    data_feature temp;
-    temp = data[cols].get_data(rows);
-    return temp;
-}
 
 int main(){
-    // probability cond_train_ham[ham.get_amount()];
+    //get data set and sort
     trained_data train_ham("csv/train/dataset_ham_train100.csv");
-    
-   
+    train_ham.sort();
+    train_ham.cut(100);
+    train_ham.print();
+    cout << train_ham.get_amount() << endl; 
 
-    // // probability cond_train_spam[spam.get_amount()];
+    cout<< "=====================" << endl;
     trained_data train_spam("csv/train/dataset_spam_train100.csv");
+    train_spam.sort();
+    train_spam.cut(100);
+    train_spam.print();
+    cout << train_spam.get_amount() << endl; 
+
     
     // //enter the number of test cases and file name including paths 
-    test test_ham("csv/test/dataset_ham_test20.csv",20);
+    // test test_ham("csv/test/dataset_ham_test20.csv",20);
 
-    // //enter the number of test cases and file name including paths 
-    test test_spam("csv/test/dataset_spam_test20.csv",20);
+    // // //enter the number of test cases and file name including paths 
+    // test test_spam("csv/test/dataset_spam_test20.csv",20);
 
+    double p_ham = 0.5;
+    double p_spam = 0.5;
 
-     cout << train_ham.get_prob(test_ham.get_word(0,0).type).prob << endl;
-     cout << train_ham.get_only_prob(test_ham.get_word(0,0).type) << endl;
+    double p_cond_spam = 0.0;
+    double p_cond_ham = 0.0;
+    double result=0.0;
     return 0;
+
 }
 
 
-
-
-
-
-// class test_ham{
-//     private:
-//         element *data;
-//     public:
-//         test_ham();
-//         string get_data();
-//         string get_type();
-//         int get_num();
-// };
-
-// test_ham::test_ham(){
+// test::test(string file, int number){
+//     number = set_data;
+//     data = new trained[set_data];
+//     string line;
+//     string data_line;
+//     int parse;
 //     int count=0;
-//     int decision = 0;
-//     int parse_1 =0, parse_2=0, parse_3=0;
-//     ifstream openFile("csv/test/dataset_ham_test20.csv");
-//     data = new element[20];
-// 	if(openFile.is_open()){
-// 		string line;
-//         string mail_data;
-//         getline(openFile, line); //eliminate first line
-// 		// while(getline(openFile, line)){
-//             getline(openFile, line);
-// 			if(line.find(",")){
-//                 parse_1 = line.find(",");
-//                 // data[count].num = stoi(line.substr(0,parse_1));
-//                 parse_2 = line.find(",",parse_1+1) - parse_1;
-//                 parse_3 = line.find(",",parse_1+1);
-//                 // data[count].type = line.substr(parse_1+1,parse_2-1);
-//                 mail_data = mail_data.append(line.substr(parse_3+2));
-//                 while(getline(openFile, line)){
-//                     cout << line << endl;
-//                     if(line.find("\"")<=0){
-//                         mail_data = mail_data+line.substr(0,line.length()-1);
+//     ifstream openFile(file);
+//     if(openFile.is_open()){
+//         getline(openFile,line);
+//     } else{
+//         cout << "no file" << endl;
+//         return;
+//     }
+//     while(getline(openFile,line)&&count<=number){
+//         if(line.find(",")!=-1){
+//             parse = line.rfind(",");
+//             data_line = line.substr(parse+2);
+//             data_line = eliminate(data_line);
+//             data[count] = parse_string(data_line,data[count]);
+//             while(getline(openFile,line)){
+//                 if((line.find("\"")==-1)){
+//                     data_line = eliminate(line);
+//                     data[count] = parse_string(data_line,data[count]);
+//                 }
+//                 else{
+//                     parse = line.find("\"");
+//                     if(line.find("\"",parse+1)==-1){
+//                         data_line = eliminate(line);
+//                         data[count] = parse_string(data_line,data[count]);
 //                         break;
-//                     } else{
-//                         mail_data = mail_data+ line;
+//                     }
+//                     else{
+//                         data_line = eliminate(line);
+//                         data[count] = parse_string(data_line,data[count]);
 //                     }
 //                 }
-                
-//             // }
-// 		}
-//         // cout << mail_data << endl;
-// 		openFile.close();
-// 	}
+//             }
+//         }
+//         count++;
+//     }
+//     openFile.close();
+// }
+
+// int test::get_amount(int i){
+//     return data[i].get_amount();
+// }
+
+// data_feature test::get_word(int cols, int rows){
+//     data_feature temp;
+//     temp = data[cols].get_data(rows);
+//     return temp;
 // }
