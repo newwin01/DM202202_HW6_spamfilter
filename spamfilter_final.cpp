@@ -23,7 +23,6 @@ class trained{
         int get_amount();
         int get_word_amount();
         void quick_sort();
-        void cut(int num);
 };
 trained::trained(){
     amount = 0;
@@ -88,26 +87,6 @@ long double trained::get_only_prob(string word){
     return prob;
 }
 
-void trained::cut(int num){
-    int amount=0;
-    int i=0;
-    while(data[i].count>=num){
-        amount++;
-        i++;
-    }
-    data_feature *new_data = new data_feature[amount];
-    this->amount = amount;
-    word_amount = 0;
-    for(int i=0;i<amount;i++){
-        new_data[i].count = data[i].count;
-        new_data[i].type.assign(data[i].type);
-        word_amount = word_amount + data[i].count;
-    }
-    delete []data;
-    data = NULL;
-    data = new_data;
-    return;
-}
 
 void swap(data_feature* a, data_feature* b)
 {
@@ -199,7 +178,6 @@ class trained_data{
         void sort();
         void print();
         data_feature get_data(int i);
-        void cut(int num);
         int get_word_amount();
 };
 
@@ -263,9 +241,7 @@ data_feature trained_data::get_data(int i){
     return data.get_data(i);
 }
 
-void trained_data::cut(int num){
-    data.cut(num);
-}
+
 int trained_data::get_word_amount(){
     return data.get_word_amount();
 }
@@ -335,13 +311,23 @@ data_feature test::get_word(int cols, int rows){
 }
 
 int main(){
+    long double th = 0.0; //put threshold value
+    long double p_cond_spam = 1.0;
+    long double p_cond_ham = 1.0;
+    long double result=0.0;
+   
+   do{
+    cout << "put threshold value (0~1): ";
+    cin >> th;
+   }while(th>1);
+    
+    cout<< "=========data processing============" << endl;
+
     //get data set and sort
     trained_data train_ham("csv/train/dataset_ham_train100.csv");
-    // train_ham.sort();
-    // train_ham.cut(20);
+    train_ham.sort();
     trained_data train_spam("csv/train/dataset_spam_train100.csv");
-    // train_spam.sort();
-    // train_spam.cut(20);
+    train_spam.sort();
 
     // cout << (long double)20/train_ham.get_word_amount() << "/" << (long double)20/train_spam.get_word_amount() << endl;
 
@@ -354,10 +340,7 @@ int main(){
     test test_spam("csv/test/dataset_spam_test20.csv",20);
 
      
-
-    long double p_cond_spam = 1.0;
-    long double p_cond_ham = 1.0;
-    long double result=0.0; 
+    
     //result test ham
     for(int k=0;k<20;k++){
         p_cond_ham = 1.0;
@@ -369,7 +352,14 @@ int main(){
             }
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);
-        cout << k+1 << ":" << result << endl;
+          if(result > th){
+            cout << "Test ham Mail" << k+1 << " is spam mail" << endl;
+            // cout << k+1 << ":" << result << endl;
+        }
+        else{
+             cout << "Test ham mail" << k+1 << " is not spam mail" << endl;
+            //  cout << k+1 << ":" << result << endl;
+        }
     }
 
     //result test spam
@@ -383,7 +373,15 @@ int main(){
             }
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);
-        cout << k+1 << ":" << result << endl;
+        if(result > th){
+            cout << "Test spam Mail" << k+1 << " is spam mail" << endl;
+            // cout << k+1 << ":" << result << endl;
+        }
+        else{
+             cout << "Test spam mail" << k+1 << " is not spam mail" << endl;
+            //  cout << k+1 << ":" << result << endl;
+        }
+        
     }    
     return 0;
 }

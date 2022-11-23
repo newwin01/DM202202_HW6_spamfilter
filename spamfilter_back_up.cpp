@@ -19,7 +19,7 @@ class trained{
         void add_data(string line);
         void print();
         data_feature get_data(int i);
-        long double get_only_prob(string word);
+        long double get_only_prob(string word, int spam);
         int get_amount();
         int get_word_amount();
         void quick_sort();
@@ -78,8 +78,10 @@ int trained::get_word_amount(){
     return word_amount;
 }
 
-long double trained::get_only_prob(string word){
-    long double prob=0.0018;
+long double trained::get_only_prob(string word, int spam){
+    long double prob;
+    if(spam == 1) prob = 0.00003;
+    else prob = 0.00004;
     for(int i=0;i<amount;i++){
         if((data[i].type)==word){
             prob = (long double)data[i].count/(long double)word_amount;
@@ -88,7 +90,13 @@ long double trained::get_only_prob(string word){
     return prob;
 }
 
-void trained::cut(int amount){
+void trained::cut(int num){
+    int amount=0;
+    int i=0;
+    while(data[i].count>=num){
+        amount++;
+        i++;
+    }
     data_feature *new_data = new data_feature[amount];
     this->amount = amount;
     word_amount = 0;
@@ -189,11 +197,12 @@ class trained_data{
     public:
         trained_data(string line);
         int get_amount();
-        long double get_only_prob(string word);
+        long double get_only_prob(string word, int spam);
         void sort();
         void print();
         data_feature get_data(int i);
         void cut(int num);
+        int get_word_amount();
 };
 
 trained_data::trained_data(string file){
@@ -240,8 +249,8 @@ int trained_data::get_amount(){
     return data.get_amount();
 }
 
-long double trained_data::get_only_prob(string word){
-    return data.get_only_prob(word);
+long double trained_data::get_only_prob(string word, int spam){
+    return data.get_only_prob(word, spam);
 }
 
 void trained_data::sort(){
@@ -260,6 +269,9 @@ void trained_data::cut(int num){
     data.cut(num);
 }
 
+int trained_data::get_word_amount(){
+    return data.get_word_amount();
+}
 class test{
     private:
         int set_data;
@@ -328,10 +340,15 @@ int main(){
     //get data set and sort
     trained_data train_ham("csv/train/dataset_ham_train100.csv");
     train_ham.sort();
-    train_ham.cut(100);
+    train_ham.cut(5);
+    // train_ham.print();
+
     trained_data train_spam("csv/train/dataset_spam_train100.csv");
     train_spam.sort();
-    train_spam.cut(100);
+    train_spam.cut(5);
+    // train_spam.print();
+
+    // cout << (long double)3/train_ham.get_word_amount() << "/" << (long double)3/train_spam.get_word_amount() << endl;
 
     cout<< "=========data processing============" << endl;
 
@@ -340,8 +357,6 @@ int main(){
 
    //enter the number of test cases and file name including paths 
     test test_spam("csv/test/dataset_spam_test20.csv",20);
-
-     
 
     long double p_cond_spam = 1.0;
     long double p_cond_ham = 1.0;
@@ -352,8 +367,8 @@ int main(){
         p_cond_spam = 1.0;
         for(int i=0;i<test_ham.get_amount(k);i++){
             for(int j=0;j<test_ham.get_word(k,i).count;j++){
-                p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_ham.get_word(k,i).type));
-                p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_ham.get_word(k,i).type)); 
+                p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_ham.get_word(k,i).type,0));
+                p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_ham.get_word(k,i).type,1)); 
             }
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);
@@ -366,8 +381,8 @@ int main(){
         p_cond_spam = 1.0;
         for(int i=0;i<test_spam.get_amount(k);i++){
             for(int j=0;j<test_spam.get_word(k,i).count;j++){
-                p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_spam.get_word(k,i).type));
-                p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_spam.get_word(k,i).type)); 
+                p_cond_ham = p_cond_ham * (train_ham.get_only_prob(test_spam.get_word(k,i).type,0));
+                p_cond_spam = p_cond_spam * (train_spam.get_only_prob(test_spam.get_word(k,i).type,1)); 
             }
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);

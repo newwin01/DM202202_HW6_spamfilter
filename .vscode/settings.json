@@ -12,6 +12,8 @@
         "ostream": "cpp",
         "new": "cpp",
         "fstream": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "iterator": "cpp",
+        "xmemory": "cpp"
     }
 }
