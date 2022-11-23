@@ -365,12 +365,12 @@ int main(){
           if(result > th){
             cout << "Test ham Mail " << k+1 << " is spam mail" << endl;
             test_ham.assign_label("Spam",k);
-            // cout << k+1 << ":" << result << endl;
+            cout << k+1 << ":" << result << endl;
         }
         else{
             cout << "Test ham mail " << k+1 << " is not spam mail" << endl;
             test_ham.assign_label("Not spam",k);
-            //  cout << k+1 << ":" << result << endl;
+             cout << k+1 << ":" << result << endl;
         }
     }
 
@@ -388,12 +388,12 @@ int main(){
         if(result > th){
             cout << "Test spam Mail " << k+1 << " is spam mail" << endl;
              test_spam.assign_label("Spam",k);
-            // cout << k+1 << ":" << result << endl;
+            cout << k+1 << ":" << result << endl;
         }
         else{
              cout << "Test spam mail " << k+1 << " is not spam mail" << endl;
              test_spam.assign_label("Not spam",k);
-            //  cout << k+1 << ":" << result << endl;
+             cout << k+1 << ":" << result << endl;
         }
         
     }    
