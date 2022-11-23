@@ -250,15 +250,19 @@ class test{
     private:
         int set_data;
         trained *data;
+        string *label;
     public:
         test(string line, int number);
         int get_amount(int i);
         data_feature get_word(int col, int row);
+        void assign_label(string label, int i);
+        int get_set_data();
 };
 
 test::test(string file, int number){
     set_data = number;
     data = new trained[set_data];
+    label = new string[set_data];
     string line;
     string data_line;
     int parse;
@@ -310,8 +314,15 @@ data_feature test::get_word(int cols, int rows){
     return temp;
 }
 
+void test::assign_label(string p_label, int i){
+    label[i].assign(p_label);
+}
+
+int test::get_set_data(){
+    return set_data;
+}
 int main(){
-    long double th = 0.0; //put threshold value
+    long double th = 0.0; //receive threshold value from user
     long double p_cond_spam = 1.0;
     long double p_cond_ham = 1.0;
     long double result=0.0;
@@ -329,7 +340,6 @@ int main(){
     trained_data train_spam("csv/train/dataset_spam_train100.csv");
     train_spam.sort();
 
-    // cout << (long double)20/train_ham.get_word_amount() << "/" << (long double)20/train_spam.get_word_amount() << endl;
 
     cout<< "=========data processing============" << endl;
 
@@ -342,7 +352,7 @@ int main(){
      
     
     //result test ham
-    for(int k=0;k<20;k++){
+    for(int k=0;k<test_ham.get_set_data();k++){
         p_cond_ham = 1.0;
         p_cond_spam = 1.0;
         for(int i=0;i<test_ham.get_amount(k);i++){
@@ -353,17 +363,19 @@ int main(){
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);
           if(result > th){
-            cout << "Test ham Mail" << k+1 << " is spam mail" << endl;
+            cout << "Test ham Mail " << k+1 << " is spam mail" << endl;
+            test_ham.assign_label("Spam",k);
             // cout << k+1 << ":" << result << endl;
         }
         else{
-             cout << "Test ham mail" << k+1 << " is not spam mail" << endl;
+            cout << "Test ham mail " << k+1 << " is not spam mail" << endl;
+            test_ham.assign_label("Not spam",k);
             //  cout << k+1 << ":" << result << endl;
         }
     }
 
     //result test spam
-    for(int k=0;k<20;k++){
+    for(int k=0;k<test_spam.get_set_data();k++){
         p_cond_ham = 1.0;
         p_cond_spam = 1.0;
         for(int i=0;i<test_spam.get_amount(k);i++){
@@ -374,11 +386,13 @@ int main(){
         }
         result = p_cond_spam/(p_cond_ham+p_cond_spam);
         if(result > th){
-            cout << "Test spam Mail" << k+1 << " is spam mail" << endl;
+            cout << "Test spam Mail " << k+1 << " is spam mail" << endl;
+             test_spam.assign_label("Spam",k);
             // cout << k+1 << ":" << result << endl;
         }
         else{
-             cout << "Test spam mail" << k+1 << " is not spam mail" << endl;
+             cout << "Test spam mail " << k+1 << " is not spam mail" << endl;
+             test_spam.assign_label("Not spam",k);
             //  cout << k+1 << ":" << result << endl;
         }
         
